@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8" />
+	<!-- import CSS -->
+	<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+
+<body>
+	<div id="app" style="width: 50%;">
+		<el-menu :default-active="elMenu.activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect"
+			background-color="#545c64" text-color="#fff" active-text-color="#ffd04b">
+			<el-menu-item index="1">个人所得税计算</el-menu-item>
+			<el-menu-item index="2">公司用人成本计算</el-menu-item>
+			<el-menu-item index="3">分期(支付或借款)利息计算</el-menu-item>
+		</el-menu>
+
+
+		<section id="chengbenCal" v-show="chengbenSectionShow">
+			<el-form :model="form" label-width="120px" label-position="right">
+				<el-row>
+					<el-form-item label="所在地">
+						<el-input v-model="form.suozaidi"> </el-input>
+					</el-form-item>
+					<el-form-item label="税前收入">
+						<el-input v-model="form.shuiqianyueshouru"> </el-input>
+					</el-form-item>
+					<el-col :span="12">
+						<el-form-item label="社保基数">
+							<el-input v-model="form.shebaojishu">
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="养老">
+							<el-input v-model="form.company_yanglaobaoxian" size="small">
+								<template
+									slot="append">%:{{'\xa0\xa0\xa0\xa0\xa0\xa0'+form.yanglaobaoxian/100*form.shebaojishu}}</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="医疗">
+							<el-input v-model="form.company_yiliaobaoxian">
+								<template
+									slot="append">%:{{'\xa0\xa0\xa0\xa0\xa0\xa0'+form.yiliaobaoxian/100*form.shebaojishu}}</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="失业">
+							<el-input v-model="form.company_shiyebaoxian">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="公积金基数">
+							<el-input v-model="form.gongjijinjishu">
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="生育">
+							<el-input v-model="form.company_shengyu">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="工伤">
+							<el-input v-model="form.company_gongshang">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+
+						<el-form-item label="公积金">
+							<el-input v-model="form.company_gongjijin">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row>
+					<el-col :span="12">
+						<el-form-item>
+							<el-button type="primary">计算</el-button>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item>
+							<el-button type="info">重置参数</el-button>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row type="flex" justify="center">
+					<el-col :span="12">
+						<el-form-item label="用人总成本">
+							<el-input v-model="form2.company_chengben" disabled><template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+			</el-form>
+		</section>
+
+		<section id="geshuiCal" v-show="geshuiSectionShow">
+			<el-form :model="form" label-width="120px" label-position="right">
+				<el-form-item label="所在地">
+					<el-input v-model="form.suozaidi"> </el-input>
+				</el-form-item>
+				<el-form-item label="税前收入">
+					<el-input v-model="form.shuiqianyueshouru"> </el-input>
+				</el-form-item>
+
+				<el-row>
+					<el-col :span="12">
+						<el-form-item label="养老">
+							<el-input v-model="form.yanglaobaoxian" size="small">
+								<template
+									slot="append">%:{{'\xa0\xa0\xa0\xa0\xa0\xa0'+form.yanglaobaoxian/100*form.shebaojishu}}</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="医疗">
+							<el-input v-model="form.yiliaobaoxian">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="失业">
+							<el-input v-model="form.shiyebaoxian">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="公积金">
+							<el-input v-model="form.gongjijin">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="社保基数">
+							<el-input v-model="form.shebaojishu">
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="公积金基数">
+							<el-input v-model="form.gongjijinjishu">
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="专项扣除">
+							<el-input v-model="form.gerendikou">
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+						<el-form-item label="免征额">
+							<el-input v-model="form.mianzhenge">
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row>
+					<el-col :span="12">
+						<el-form-item>
+							<el-button type="primary">计算</el-button>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item>
+							<el-button type="info">重置参数</el-button>
+						</el-form-item>
+					</el-col>
+				</el-row>
+			</el-form>
+			<el-form :model="form2" label-width="120px" label-position="right">
+				<el-row>
+					<el-col :span="12">
+						<el-form-item label="三险一金个人缴纳">
+							<el-input v-model="form2.sanxianyijin" disabled>
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="含税收入">
+							<el-input v-model="form2.hanshuishouru" disabled>
+								<template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row>
+					<el-col :span="12">
+						<el-form-item label="缴纳个税(月)">
+							<el-input v-model="form2.jiaonageshui" disabled><template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="税后收入(月)">
+							<el-input v-model="form2.shuihoushouru" disabled><template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row>
+					<el-col :span="12">
+						<el-form-item label="缴纳个税(年)">
+							<el-input v-model="form2.jiaonageshuiYear" disabled><template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="税后收入(年)">
+							<el-input v-model="form2.shuihoushouruYear" disabled><template slot="append">元</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+			</el-form>
+			<div class="table-show">
+				<el-button type="primary" class="tableShow" @click="everyMouthShowChanged">查看一年中每月应缴税额和税后收入</el-button>
+				<el-table v-if="form.everyMouthShow" :data="everyMouthData" height="250" border style="width: 100%;">
+					<el-table-column prop="date" label="月份" width="180">
+					</el-table-column>
+					<el-table-column prop="yijiaonageshui" label="应缴税额" width="180">
+					</el-table-column>
+					<el-table-column prop="shuihoushouru" label="税后收入">
+					</el-table-column>
+				</el-table>
+			</div>
+			<div class="table-show">
+				<el-button type="primary" class="tableShow" @click="shuilvTableShowChanged">查看个人所得税税率表</el-button>
+				<el-table v-if="form.shuilvTableShow" :data="shuilvTable" height="250" border style="width: 100%;">
+					<el-table-column prop="jishu" label="级数" width="180">
+					</el-table-column>
+					<el-table-column prop="yingnashuisuodee" label="应纳税所得额(含税)" width="180">
+					</el-table-column>
+					<el-table-column prop="shuilv" label="税率">
+					</el-table-column>
+					<el-table-column prop="susuankouchu" label="速算扣除">
+					</el-table-column>
+				</el-table>
+			</div>
+		</section>
+
+		<section id="fenqilixiCal" v-show="fenqilixiSectionShow">
+			<el-form :model="form_fenqi" label-width="220px" label-position="right">
+				<el-form-item label="分期(支付或借款)金额">
+					<el-input v-model="form_fenqi.jine"> </el-input>
+				</el-form-item>
+				<el-form-item label="分期数量">
+					<el-input v-model.number="form_fenqi.fenqiNum" > </el-input>
+				</el-form-item>
+				<el-form-item label="手续计算方式">
+					<el-radio-group v-model="radio">
+						<el-radio :label="1">百分比值</el-radio>
+						<el-radio :label="2">固定值</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="每期手续费(或利率)百分比值" v-show="radio==1? true:false">
+					<el-input v-model.number="form_fenqi.shouxufei">
+						<template slot="append">%</template>
+					</el-input>
+				</el-form-item>
+				<el-form-item label="每期手续费(或利率)固定值" v-show="radio==2? true:false">
+					<el-input v-model.number="form_fenqi.shouxufeiValue">
+						<template slot="append">元</template>
+					</el-input>
+				</el-form-item>
+			</el-form>
+			<el-form :model="form_fenqi2" label-width="220px" label-position="right">
+				<el-row>
+					<el-col :span="12">
+						<el-form-item label="每期还款额">
+							<el-input v-model="form_fenqi2.meiqihuankuan">
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="总还款额">
+							<el-input v-model="form_fenqi2.zonghuankuan">
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="总利息">
+							<el-input v-model="form_fenqi2.zonglixi">
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row>
+					<el-col :span="12">
+						<el-form-item label="表面总利率(每期利率*期数)">
+							<el-input v-model="form_fenqi2.biaomiannianlilv">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+					<el-col :span="12">
+						<el-form-item label="实际总利率(每期实际利率累加)">
+							<el-input v-model="form_fenqi2.shijinianlilv">
+								<template slot="append">%</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+			</el-form>
+			<div class="table-show">
+				<el-button type="primary" class="tableShow" @click="shilijixiTableShowChanged">查看每期实际利率表</el-button>
+				<el-table v-if="form_fenqi.shijilixiSectionShow" :data="shijilixiTable" height="250" border
+					style="width: 100%;">
+					<el-table-column prop="date" label="分期数" width="180">
+					</el-table-column>
+					<el-table-column prop="meiqijiekuan" label="每期实际借款" width="180">
+					</el-table-column>
+					<el-table-column prop="meiqililv" label="每期实际利率">
+					</el-table-column>
+				</el-table>
+			</div>
+		</section>
+
+		<section id="fangdaiCal" v-show="fangdaiSectionShow">
+
+		</section>
+	</div>
+</body>
+<!-- import Vue before Element -->
+<script src="https://unpkg.com/vue/dist/vue.js"></script>
+<!-- <script src="./vue.js"></script> -->
+<!-- import JavaScript -->
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<!-- <script src="./index.js"></script> -->
+<script>
+	// const suozaidi = '所在地';
+	// 用来计算的规定数据
+	// const shuilvbiao = '税率表';
+	// const shuilvjishubiao = '税率基数表';
+	// const susuankouchubiao = '速算扣除表';
+	// const shuilv = '税率';   //当前收入的税率
+	new Vue({
+		el: "#app",
+		data: function () {
+			return {
+				elMenu: {
+					activeIndex: '1',
+					activeIndex2: '2',
+				},
+				//个税+用人成本，计算的表单参数，写成对象是为了绑定表单
+				form: {
+					//个税计算模块，需填写参数
+					shuiqianyueshouru: 10000, //税前收入
+
+					yanglaobaoxian: 8, //养老保险比例
+					yiliaobaoxian: 2, //医疗保险比例
+					shiyebaoxian: 1, //失业保险比例
+					gongjijin: 8, //公积金比例
+
+					gongjijinjishu: 5000, //公积金基数
+					shebaojishu: 5000, //社保基数
+					gerendikou: 1800, //个人专项抵扣
+					mianzhenge: 5000, //免征额
+
+					//公司成本计算模块，需填写参数
+					company_yanglaobaoxian: 8, //养老保险比例
+					company_yiliaobaoxian: 2, //医疗保险比例
+					company_shiyebaoxian: 1, //失业保险比例
+					company_gongjijin: 8, //公积金比例
+					company_gongshang: 1, //工伤
+					company_shengyu: 1, //生育
+
+					suozaidi: "guangzhou", //所在城市，后期抓取数据
+
+					shuilvbiao: [0.03, 0.1, 0.2, 0.25, 0.3, 0.35, 0.45], //各个收入段的税率表
+					shuilvjishubiao: [0, 36000, 144000, 300000, 420000, 660000, 960000], //税率基数，以年记
+					susuankouchubiao: [0, 2520, 16920, 31920, 52920, 85920, 181920], //速算扣除的目的是直接用当前应税额*税率-速算扣除
+
+					everyMouthShow: false, //每月纳税显示开关
+					shuilvTableShow: false //税率表开关
+
+				},
+				geshuiSectionShow: true, //个税区域显示开关
+				chengbenSectionShow: false, //用人成本区域显示开关
+				fenqilixiSectionShow: false, //分期利息区域显示开关
+				fangdaiSectionShow: false, //房贷区域显示开关
+				
+				//分期还款及利息，计算的表单参数
+				form_fenqi: {
+					jine: 10000, //分期金额
+					fenqiNum: 12, //分期期数
+					shouxufei: 0.5, //每期手续费(百分比)
+					shouxufeiValue: 100, //每期手续费(绝对值)
+					shijilixiSectionShow: false //实际利息区域显示开关
+				},
+				radio: 1,
+			};
+		},
+		computed: {
+			//三险一金(养老金医疗保险失业保险+公积金)
+			sanxianyijin: (vm) =>
+				(vm.form.yanglaobaoxian / 100 +
+					vm.form.yiliaobaoxian / 100 +
+					vm.form.shiyebaoxian / 100) *
+				vm.form.shebaojishu +
+				(vm.form.gongjijin / 100) * vm.form.gongjijinjishu, //三险一金=对应基数*对应的和
+			//含税收入（税前收入）
+			hanshuishouru: (vm) =>
+				vm.form.shuiqianyueshouru - vm.sanxianyijin - vm.form.gerendikou, //含税收入=税前收入-三险一金
+			//每月缴纳个税
+			jiaonageshui: (vm) => {
+				//  每月缴纳个税= （税前收入-三险一金-专项抵扣）*对应税率-速算扣除
+				// console.log('含税月入：'+vm.hanshuishouru);
+				// console.log('含税年入：'+vm.hanshuishouru*12);
+				let yingshuie = vm.hanshuishouru - vm.form.mianzhenge;
+				// console.log('应税额月：'+yingshuie);
+				// console.log('应税额年：'+yingshuie*12);
+				let shuilvIndex = vm.form.shuilvjishubiao.findIndex((item) => //计算适用税率
+					yingshuie * 12 < item ? true : false
+				);
+				// console.log('数算扣除：'+vm.form.susuankouchubiao[shuilvIndex-1]);
+				// console.log('税率：'+vm.form.shuilvbiao[shuilvIndex-1]);
+				let geshui = -vm.form.susuankouchubiao[shuilvIndex - 1] +
+					yingshuie * 12 * vm.form.shuilvbiao[shuilvIndex - 1];
+				return geshui / 12;
+			},
+			//每月税后收入
+			shuihoushouru: (vm) =>
+				vm.form.shuiqianyueshouru - vm.sanxianyijin - vm.jiaonageshui, //税后收入=税前收入-三险一金-缴纳个税
+			//公司成本=税前月收入+公司五险一金比例*基数
+			company_chengben: vm => vm.form.shuiqianyueshouru +
+				(vm.form.company_gongshang + vm.form.company_shengyu + vm.form.company_shiyebaoxian +
+					vm.form.company_yanglaobaoxian + vm.form.company_yiliaobaoxian) / 100 * vm.form.shebaojishu +
+				vm.form.company_gongjijin / 100 * vm.form.gongjijinjishu,
+			//个税计算结果的表单参数,这里写成computed，为啥来着？
+			//主要是表单需要绑定一个对象，计算结果computed只好作为对象属性
+			//结算结果computed改变了，也会触发对象属性的变化
+			form2: (vm) => {
+				return {
+					//三险一金个人缴纳
+					sanxianyijin: vm.sanxianyijin,
+					//含税收入
+					hanshuishouru: vm.hanshuishouru,
+					//缴纳个税
+					jiaonageshui: vm.jiaonageshui,
+					//税后收入
+					shuihoushouru: vm.shuihoushouru,
+					//缴纳个税 (年)
+					jiaonageshuiYear: vm.jiaonageshui * 12,
+					//税后收入 (年)
+					shuihoushouruYear: vm.shuihoushouru * 12,
+					//用人成本
+					company_chengben: vm.company_chengben
+				};
+			},
+			form_fenqi2: vm => {
+				return {
+					//每期还款
+					meiqihuankuan: Number(vm.meiqihuankuan).toFixed(2),
+					//总还款
+					zonghuankuan: Number(vm.zonghuankuan).toFixed(2),
+					//总利息
+					zonglixi: Number(vm.zonglixi).toFixed(2),
+					//表面年利率
+					biaomiannianlilv: Number(vm.biaomiannianlilv).toFixed(2),
+					//实际年利息
+					shijinianlilv: Number(vm.shijinianlilv).toFixed(2)
+				}
+			},
+			//每期还款   =借款金额/分期数 +手续费，手续费=固定 or 借款金额*手续费率
+			meiqihuankuan: vm => {
+				return (vm.form_fenqi.shouxufeiValue*0+vm.form_fenqi.shouxufei*0)+vm.form_fenqi.jine / vm.form_fenqi.fenqiNum +
+				 ((vm.radio == '2' ? vm.form_fenqi.shouxufeiValue : (vm.form_fenqi.shouxufei / 100) *vm.form_fenqi.jine))},
+			//总还款  =每期还款*分期数
+			zonghuankuan: vm => vm.meiqihuankuan * vm.form_fenqi.fenqiNum,
+			//总利息  =总还款-借款金额
+			zonglixi: vm => vm.zonghuankuan - vm.form_fenqi.jine,
+			//表面年利率 =总利息/借款金额*100%
+			biaomiannianlilv: vm => vm.zonglixi / vm.form_fenqi.jine * 100,
+			//实际年利率 =   每期还款*期数/（每期还款后剩余借款求和）
+			shijinianlilv: vm => {
+				console.log(vm.form_fenqi.fenqiNum);
+				
+				return vm.shijilvliCal(vm.form_fenqi.jine, vm.form_fenqi.fenqiNum, vm.meiqihuankuan)
+					.shijizonglilv;
+			},
+			// 12个月的纳税和收入情况
+			everyMouthData: (vm) => {
+				let yijiaonageshui = 0;
+				let everyMouthDataArr = [];
+				for (let i = 0; i < 12; i++) {
+					let yingshuie = (vm.hanshuishouru - vm.form.mianzhenge) * (i + 1);
+					// console.log((i+1)+'月累计应税总额：'+yingshuie);
+					let shuilvIndex = vm.form.shuilvjishubiao.findIndex((item) =>
+						yingshuie < item ? true : false
+					);
+					let yingjiaogeshui = -vm.form.susuankouchubiao[shuilvIndex - 1] +
+						yingshuie * vm.form.shuilvbiao[shuilvIndex - 1] -
+						yijiaonageshui;
+					yijiaonageshui = yingjiaogeshui + yijiaonageshui;
+					let shuihoushouru = vm.hanshuishouru - yingjiaogeshui;
+					// 					console.log("本月缴纳："+yingjiaogeshui);
+					// 					console.log("总计缴纳："+yijiaonageshui);
+					// 					console.log("税后收入："+shuihoushouru);
+					everyMouthDataArr.push({
+						date: i + 1 + "月",
+						yijiaonageshui: yingjiaogeshui,
+						shuihoushouru: shuihoushouru,
+					});
+				}
+				return everyMouthDataArr;
+			},
+			// 税率表
+			shuilvTable: vm => {
+				let shuilvTableArr = new Array(7);
+				shuilvTableArr[0] = {
+					jishu: 1,
+					yingnashuisuodee: '不超过36,000元的部分', //应纳税所得额
+					shuilv: 3,
+					susuankouchu: 0
+				};
+				shuilvTableArr[6] = {
+					jishu: 7,
+					yingnashuisuodee: '超过960,000的部分', //应纳税所得额
+					shuilv: 45,
+					susuankouchu: 181920
+				};
+				for (let i = 1; i < 6; i++) {
+					shuilvTableArr[i] = {
+						jishu: i + 1,
+						yingnashuisuodee: `超过${vm.form.shuilvjishubiao[i]/1000},000元至${vm.form.shuilvjishubiao[i+1]/1000},000元的部分`, //应纳税所得额
+						shuilv: vm.form.shuilvbiao[i] * 100,
+						susuankouchu: vm.form.susuankouchubiao[i]
+					}
+				}
+				return shuilvTableArr;
+			},
+			// 实际利息表
+			 shijilixiTable: 
+			 vm => {
+				console.log(vm.form_fenqi.fenqiNum);
+				 return vm.shijilvliCal(vm.form_fenqi.jine, vm.form_fenqi.fenqiNum, vm.meiqihuankuan)
+				.TableArr},
+		},
+		methods: {
+			everyMouthShowChanged: function () {
+				this.form.everyMouthShow = !this.form.everyMouthShow;
+			},
+			shuilvTableShowChanged: function () {
+				this.form.shuilvTableShow = !this.form.shuilvTableShow;
+			},
+			shilijixiTableShowChanged: function () {
+				this.form_fenqi.shijilixiSectionShow = !this.form_fenqi.shijilixiSectionShow;
+			},
+			handleSelect(key, keyPath) {
+				// console.log(key);
+				this.geshuiSectionShow = false;
+				this.chengbenSectionShow = false;
+				this.fenqilixiSectionShow = false;
+				if (key == 1) {
+					this.geshuiSectionShow = true;
+				}
+				if (key == 2) {
+					this.chengbenSectionShow = true;
+				}
+				if (key == 3) {
+					this.fenqilixiSectionShow = true;
+				}
+			},
+			//实际年利率的计算函数  实际年利率 =每期还款*期数/（每期还款后剩余借款求和）
+			//返回 实际每月的年利率表和整年的实际年利率
+			shijilvliCal(zongjine, fenqishu, meiqihuankuan) {
+				//总金额  分期数  每期还款
+				// console.log('shijilvliCal function,fenqishu='+fenqishu);
+
+				let meiqijiekuan = new Array(fenqishu); //每期实际借款
+				let meiqililv = new Array(fenqishu); //每期实际利率
+				let date = new Array(fenqishu);
+				let zongjiekuan = 0; //每次实际借款累加
+				let TableArr = new Array(fenqishu);
+				let shijizonglilv=0;
+				for (i = 0; i < meiqijiekuan.length; i++) {
+					// meiqijiekuan[i] = zongjine - i * meiqihuankuan;
+					// zongjiekuan += meiqijiekuan[i];
+					// meiqililv[i] =
+					// `${((meiqihuankuan - meiqijiekuan[i] / fenqishu) / meiqijiekuan[i]*100).toFixed(2)}%`; // 每期利率= (每期还款-每期剩余总借款/分期数)/每期剩余总借款
+					meiqijiekuan[i] = zongjine - i * zongjine/fenqishu;
+					zongjiekuan += meiqijiekuan[i];
+					meiqililv[i] =
+					`${((meiqihuankuan-zongjine/fenqishu)/meiqijiekuan[i]*100).toFixed(2)}%`; // 每期利率= (每期还款-每期剩余总借款/分期数)/每期剩余总借款
+					date[i] = `第${i+1}期`;
+					// console.log('第' + (i + 1) + '期借款:' + meiqijiekuan[i]);
+					// console.log('第' + (i + 1) + '期利率:' + meiqililv[i]);
+					TableArr[i] = {
+						date: date[i],
+						meiqijiekuan: Math.ceil(meiqijiekuan[i])>0? Math.ceil(meiqijiekuan[i]):Math.ceil(meiqijiekuan[i])+'(负数表示欠款已经还完，并且除了利息，还多还了部分本金。)',
+						meiqililv:  Number(meiqililv[i].slice(0,-1))>0?meiqililv[i]:(meiqililv[i]+'(负数利率无意义，因为已经不欠本金了，无法计算利率，每次还款都是亏钱)')
+					};
+					shijizonglilv=shijizonglilv+Number(meiqililv[i].slice(0,-1));
+				}
+				return {
+					TableArr,
+					// shijizonglilv: (meiqihuankuan * fenqishu / zongjiekuan * 100).toFixed(2)
+					shijizonglilv: shijizonglilv
+				}
+			}
+		},
+		mounted() {},
+	});
+</script>
+<style type="text/css">
+	#app {
+		position: absolute;
+		left: 50%;
+		transform: translateX(-50%);
+	}
+
+	.table-show {
+		padding: 0px 0px 10px 0px;
+	}
+
+	.table-show button {
+		width: 100%;
+	}
+
+	.el-row {
+		margin-bottom: 20px;
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
+	.el-col {
+		border-radius: 4px;
+	}
+
+	.bg-purple-dark {
+		background: #99a9bf;
+	}
+
+	.bg-purple {
+		background: #d3dce6;
+	}
+
+	.bg-purple-light {
+		background: #e5e9f2;
+	}
+
+	.grid-content {
+		border-radius: 4px;
+		min-height: 36px;
+	}
+
+	.row-bg {
+		padding: 10px 0;
+		background-color: #f9fafc;
+	}
+</style>
+
+</html>
